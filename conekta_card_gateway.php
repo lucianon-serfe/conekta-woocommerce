@@ -286,8 +286,8 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
                $this->transaction_id
                )
            );
-
-        unset($_SESSION['order_awaiting_payment']);
+        # Global $_SESSION is not available
+        WC()->session->set( 'order_awaiting_payment', null );
     }
 
     public function process_payment($order_id)
