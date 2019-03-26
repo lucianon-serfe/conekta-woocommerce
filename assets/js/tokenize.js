@@ -1,89 +1,133 @@
 jQuery(document).ready(function ($) {
+  var checkout;
+  var $form = $("form.checkout,form#order_review");
+  var $paymentErrors = $form.find('.payment_method_conektacard .payment-errors');
+  var showError = function (message) {
+    $paymentErrors.text(message);
+    $form.unblock();
+  }
 
-	var $form = $('form.checkout,form#order_review');
+  $paymentErrors.html('');
 
-	$form.bind('checkout_place_order_conektacard', function (e) {
-		if ($form.find('[name="conekta_token"]').length) return true;
+  $("body").on("click", "form#order_review input:submit", function () {
+    if ($("input[name=payment_method]:checked").val() != "conektacard") {
+      return true;
+    }
+    return false;
+  });
 
-		var $paymentErrors = $form.find('.payment_method_conektacard .payment-errors');
-		var showError = function (message) {
-			$paymentErrors.text(message);
-			$form.unblock();
-		}
+  $("body").on("click", "form.checkout input:submit", function () {
+    $(
+      ".woocommerce_error, .woocommerce-error, .woocommerce-message, .woocommerce_message"
+    ).remove();
+    $("form.checkout").find('[name="conekta_token"]').remove();
+  });
 
-		$paymentErrors.html('');
+  $("form.checkout").bind("checkout_place_order_conektacard", function (e) {
+    e.preventDefault();
 
-		$form.block({
-			message: null,
-			overlayCSS: {
-				background: "#fff url(" + woocommerce_params.ajax_loader_url + ") no-repeat center",
-				backgroundSize: "16px 16px",
-				opacity: 0.6
-			}
-		});
+    var $paymentErrors = $form.find('.payment_method_conektacard .payment-errors');
+    var showError = function (message) {
+      $paymentErrors.text(message);
+      $form.unblock();
+    }
 
-		function callBack(token) {
-			if (!token.id) {
-				if (!token.card) {
-					return showError('El número de tarjeta es inválido');
-				} else if (!token.cvc) {
-					return showError('El cvc es inválido');
-				} else if (!token.date) {
-					return showError('La fecha de la tarjeta es inválida');
-				}
-			} else {
-				if($('<input type="hidden" name="conekta_token" />').length > 0)
-					$('<input type="hidden" name="conekta_token" />').val(token.id);
-				else
-					$form.append($('<input type="hidden" name="conekta_token" />').val(token.id));
-				$form.submit();
-			}
-		}
+    $form.find(".payment-errors").html("");
+    $form.block({
+      message: null,
+      overlayCSS: {
+        background: "#fff url(" +
+          woocommerce_params.ajax_loader_url + ") no-repeat center",
+        backgroundSize: "16px 16px",
+        opacity: 0.6
+      }
+    });
 
-		createToken('conekta-card-number', callBack, {
-			name: $('#conekta-card-name').val(),
-			expMonth: $('#card_expiration').val(),
-			expYear: $('#card_expiration_yr').val()
-		});
+    if ($form.find('[name="conekta_token"]').length) {
+      return true;
+    }
+    var onBuy = function (token) {
+      if (token.id) {
+        node = document.createElement("input");
+        node.type = "hidden";
+        node.name = "conekta_token";
+        node.value = token.id;
+        $form.append(node);
+        $form.submit();
+      } else {
+        if (!token.card) {
+          return showError('El número de tarjeta es inválido');
+        } else if (!token.cvc) {
+          return showError('El cvc es inválido');
+        } else if (!token.date) {
+          return showError('La fecha de la tarjeta es inválida');
+        }
+      }
+    };
 
-		return false;
-	});
+    cardHolderName = document.getElementById('conekta-card-name').value;
+    expirationMonth = document.getElementById('card_expiration').value;
+    expirationYear = document.getElementById('card_expiration_yr').value;
 
-	$form.on('click', ':submit', function () {
-		$('.woocommerce_error, .woocommerce-error, .woocommerce-message, .woocommerce_message').remove();
-		$form.find('[name="conekta_token"]').remove();
-	});
+    checkout.tokenize({
+      name: cardHolderName,
+      expYear: expirationYear,
+      expMonth: expirationMonth
+    }, onBuy);
 
-	$(document.body).on('updated_checkout wc-credit-card-form-init', function () {
-		var inputStyle = {
-			'padding': '.6180469716em',
-			'background-color': 'rgb(242, 242, 242)',
-			'color': 'rgba(67, 69, 75, 1)',
-			'box-shadow': 'inset 0 1px 1px rgba(0,0,0,.125)',
-			'box-sizing': 'border-box',
-			'font-weight': '400',
-			'line-height': '1.618',
-			'font-size': '100%',
-			'margin': '0',
-			'vertical-align': 'baseline',
-			'border': '0',
-		};
-		var cardComponent = {
-			style: inputStyle, 
-			idElement: 'conekta-card-number',
-			advanceStyle:[
-				{name: 'valid', style: {'box-shadow': 'inset 2px 0 0 #0f834d'}}
-			],
-			animation: true
-		};
-		var cvcComponent = {
-			style: inputStyle,
-			advanceStyle:[
-				{name: 'valid', style: {'box-shadow': 'inset 2px 0 0 #0f834d'}}
-			],
-			idElement: 'conekta-card-cvc'
-		}
+    return false;
+  });
 
-		renderComponents(wc_conekta_params.public_key, cardComponent, cvcComponent);
-	});
+  $(document.body).on("updated_checkout wc-credit-card-form-init", function () {
+    var tokenComponent = {
+      'box-shadow': 'inset 2px 0 0 #0f834d;',
+      'padding': '.6180469716em;',
+      'background-color': '#f2f2f2;',
+      'color': '#43454b;',
+      'outline': '0;',
+      'border': '0;',
+      '-webkit-appearance': 'none;',
+      'box-sizing': 'border-box;',
+      'font-weight': '400;',
+      'height': '45.65px',
+      'width': '100%;',
+      'font-size': '100%;',
+      'margin': '0;',
+      'vertical-align': 'baseline;',
+      'font-family': '"Source Sans Pro",HelveticaNeue-Light,"Helvetica Neue Light","Helvetica Neue",Helvetica,Arial,"Lucida Grande",sans-serif;',
+      'line-height': '1.618;',
+      'text-rendering': 'optimizeLegibility;',
+      'list-style': 'none !important;',
+      'word-wrap': 'break-word;'
+    };
+
+    var cardComponent = {
+      style: tokenComponent,
+      advanceStyle: [{
+        name: "valid",
+        style: {
+          "box-shadow": "inset 2px 0 0 #0f834d",
+        }
+      }],
+      animation: true,
+      elementID: "conekta-card-number"
+    };
+
+    var cvcComponent = {
+      style: tokenComponent,
+      advanceStyle: [{
+        name: "valid",
+        style: {
+          "box-shadow": "inset 2px 0 0 #0f834d"
+        }
+      }],
+      elementID: "conekta-card-cvc"
+    };
+
+    checkout = new ConektaDirect(
+      wc_conekta_params.public_key,
+      cardComponent,
+      cvcComponent
+    );
+  });
 });
