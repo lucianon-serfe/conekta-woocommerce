@@ -5,12 +5,11 @@
  * Url     : https://www.conekta.io/es/docs/plugins/woocommerce
  */
 ?>
-
 <div class="clear"></div>
 <span style="width: 100%; float: left; color: red;" class='payment-errors required'></span>
 <div class="form-row form-row-wide">
     <label for="conekta-card-number"><?php echo esc_html($this->lang_options["card_number"]); ?><span class="required">*</span></label>
-    <div id="conekta-card-number" style="height: 68px;"></div>
+    <input id="conekta-card-number" class="input-text" type="text" data-conekta="card[number]" />
 </div>
 
 <div class="form-row form-row-wide">
@@ -34,20 +33,21 @@
     <select id="card_expiration_yr" data-conekta="card[exp_year]" class="year" autocomplete="off">
         <option selected="selected" value=""> <?php echo esc_html($this->lang_options["year"]) ?></option>
         <?php
-        $start_year = (integer)date("Y");
-        $end_year = (integer)date("Y", strtotime("+10 years"));
-        for ($i = $start_year; $i <= $end_year; $i++) : ?>
+         $start_year = (integer)date("Y");
+         $end_year = (integer)date("Y", strtotime("+10 years"));
+         for ($i = $start_year; $i <= $end_year; $i++) : ?>
         <option value="<?php echo $i; ?>"><?php echo $i; ?></option>
         <?php endfor; ?>
     </select>
 </p>
 
 <?php echo esc_html($this->lang_options["card_expiration"]); ?>
+
 <div class="clear"></div>
 
 <p class="form-row form-row-first">
     <label for="conekta-card-cvc">CVC <span class="required">*</span></label>
-    <div id="conekta-card-cvc" style="height: 68px;"></div>
+    <input id="conekta-card-cvc" class="input-text" type="text" maxlength="4" data-conekta="card[cvc]" value="" style="border-radius:6px" />
 </p>
 
 <?php if ($this->enable_meses) : ?>
