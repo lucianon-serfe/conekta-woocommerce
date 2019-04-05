@@ -36,6 +36,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
 
         $this->use_sandbox_api      = strcmp($this->settings['debug'], 'yes') == 0;
         $this->enable_meses         = strcmp($this->settings['meses'], 'yes') == 0;
+        $this->enable_iframe         = strcmp($this->settings['iframe'], 'yes') == 0;
         $this->test_api_key         = $this->settings['test_api_key'];
         $this->live_api_key         = $this->settings['live_api_key'];
         $this->test_publishable_key = $this->settings['test_publishable_key'];
@@ -107,6 +108,12 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
                 'label'       => __('Turn on testing', 'woothemes'),
                 'default'     => 'no'
             ),
+            'iframe' => array(
+                'type'        => 'checkbox',
+                'title'       => __('Iframe', 'woothemes'),
+                'label'       => __('Enable iframe (beta)', 'woothemes'),
+                'default'     => 'no'
+            ),
             'title' => array(
                 'type'        => 'text',
                 'title'       => __('Title', 'woothemes'),
@@ -150,7 +157,11 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
 
     public function payment_fields()
     {
-        include_once('templates/payment.php');
+        if ($this->enable_iframe) {
+            include_once('templates/payment.php');
+        } else {
+            include_once('templates/payment_legacy.php');
+        }
     }
 
     public function ckpg_payment_fields()

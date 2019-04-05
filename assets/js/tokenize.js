@@ -5,7 +5,7 @@ jQuery(document).ready(function ($) {
   var showError = function (message) {
     $paymentErrors.text(message);
     $form.unblock();
-  }
+  };
 
   $paymentErrors.html('');
 
@@ -30,7 +30,7 @@ jQuery(document).ready(function ($) {
     var showError = function (message) {
       $paymentErrors.text(message);
       $form.unblock();
-    }
+    };
 
     $form.find(".payment-errors").html("");
     $form.block({
