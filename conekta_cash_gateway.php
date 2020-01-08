@@ -110,7 +110,7 @@ class WC_Conekta_Cash_Gateway extends WC_Conekta_Plugin
                 'type'        => 'text',
                 'title'       => __('Title', 'woothemes'),
                 'description' => __('This controls the title which the user sees during checkout.', 'woothemes'),
-                'default'     => __('Oxxo Pay Payment', 'woothemes')
+                'default'     => __('Conekta PAgo en Efectivo en Oxxo Pay', 'woothemes')
             ),
             'test_api_key' => array(
                 'type'        => 'password',
