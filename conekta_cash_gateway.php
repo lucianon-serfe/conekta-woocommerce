@@ -159,6 +159,15 @@ class WC_Conekta_Cash_Gateway extends WC_Conekta_Plugin
     function ckpg_thankyou_page($order_id) {
         $order = new WC_Order( $order_id );
 
+        /*
+        session_start();
+        $intans = $_SESSION['intans'];
+        $instan = $_SESSION['instan'];
+
+        echo '<p"><strong>'.('instances').':</strong> ' . $intans . '</p>';
+        echo '<p"><strong>'.('instance').':</strong> ' . $instan . '</p>';
+        */
+
         echo '<p style="font-size: 30px"><strong>'.__('Referencia').':</strong> ' . get_post_meta( esc_html($order->get_id()), 'conekta-referencia', true ). '</p>';
         echo '<p>OXXO cobrará una comisión adicional al momento de realizar el pago.</p>';
         echo '<p>INSTRUCCIONES:'. $this->settings['instructions'] .'</p>';
@@ -363,6 +372,7 @@ function ckpg_conekta_cash_order_status_completed($order_id = null)
     }
 
     $data = get_post_meta( $order_id );
+
     $total = $data['_order_total'][0] * 100;
 
     $amount = floatval($_POST['amount']);
