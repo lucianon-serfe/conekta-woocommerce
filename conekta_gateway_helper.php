@@ -26,7 +26,7 @@ function ckpg_check_balance($order, $total) {
     }
 
     if ($amount != $total) {
-        $adjustment = $total - $amount;
+        $adjustment = abs($amount - $total);
 
         $order['tax_lines'][0]['amount'] =
             $order['tax_lines'][0]['amount'] + intval($adjustment);
