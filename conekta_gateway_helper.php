@@ -146,13 +146,25 @@ function ckpg_build_shipping_lines($data)
     return $shipping_lines;
 }
 
+//Solution for amount invalid
 function ckpg_build_discount_lines($data)
 {
     $discount_lines = array();
-
     if (!empty($data['discount_lines'])) {
-        $discount_lines = $data['discount_lines'];
-    }
+        $discounts = $data['discount_lines'];
+        foreach ($discounts as $discount) {
+            $discount_lines = array_merge(
+                $discount_lines,
+                    array(
+                        array(
+                            'code' => (string) $discount['code'],
+                            'amount' => (string) $discount['amount'] * 100,
+                            'type'=> 'coupon'
+                        )
+                    )
+                );
+            }
+        }
 
     return $discount_lines;
 }
