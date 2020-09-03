@@ -26,7 +26,7 @@ function ckpg_check_balance($order, $total) {
     }
 
     if ($amount != $total) {
-        $adjustment = $total - $amount;
+        $adjustment = abs($amount - $total);
 
         $order['tax_lines'][0]['amount'] =
             $order['tax_lines'][0]['amount'] + intval($adjustment);
@@ -146,13 +146,25 @@ function ckpg_build_shipping_lines($data)
     return $shipping_lines;
 }
 
+//Solution for amount invalid
 function ckpg_build_discount_lines($data)
 {
     $discount_lines = array();
-
     if (!empty($data['discount_lines'])) {
-        $discount_lines = $data['discount_lines'];
-    }
+        $discounts = $data['discount_lines'];
+        foreach ($discounts as $discount) {
+            $discount_lines = array_merge(
+                $discount_lines,
+                    array(
+                        array(
+                            'code' => (string) $discount['code'],
+                            'amount' => (string) $discount['amount'] * 100,
+                            'type'=> 'coupon'
+                        )
+                    )
+                );
+            }
+        }
 
     return $discount_lines;
 }
@@ -211,7 +223,7 @@ function ckpg_get_request_data($order)
         if (!empty($shipping_method)) {
             $shipping_lines  = array(
                 array(
-                    'amount'  => $amountShipping,
+                    'amount'  => (int) number_format($amountShipping),
                     'carrier' => $shipping_method,
                     'method'  => $shipping_method
                 )
