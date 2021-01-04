@@ -146,7 +146,7 @@ class WC_Conekta_Cash_Gateway extends WC_Conekta_Plugin
             'expiration' => array(
                 'type'        => 'text',
                 'title'       => __('Expiration time (in days or hours) for the reference', 'woothemes'),
-                'default'     => __('0', 'woothemes')
+                'default'     => __('1', 'woothemes')
             ),
             'alternate_imageurl' => array(
                 'type'        => 'text',
@@ -291,7 +291,7 @@ class WC_Conekta_Cash_Gateway extends WC_Conekta_Plugin
 
  
             if($this->settings['expiration_time']['hours']){
-                if($this->settings['expiration'] > 0 && $this->settings['expiration'] < 25){
+                if($this->settings['expiration'] > 0 && $this->settings['expiration'] < 24){
                     $expires_at = time() + ($this->settings['expiration'] * 3600);
                 }
             }
