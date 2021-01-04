@@ -63,6 +63,33 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
         if(empty($this->secret_key)) {
           $this->enabled = false;
         }
+
+        add_action(
+            'woocommerce_api_' . strtolower(get_class($this)),
+            array($this, 'ckpg_webhook_handler')
+        );
+    }
+
+    /**
+     * Updates the status of the order.
+     * Webhook needs to be added to Conekta account tusitio.com/wc-api/WC_Conekta_Card_Gateway
+     */
+    public function ckpg_webhook_handler()
+    {
+        header('HTTP/1.1 200 OK');
+        $body          = @file_get_contents('php://input');
+        $event         = json_decode($body, true);
+        $conekta_order = $event['data']['object'];
+        $charge        = $conekta_order['charges']['data'][0];
+        $order_id      = $conekta_order['metadata']['reference_id'];
+        $paid_at       = date("Y-m-d", $charge['paid_at']);
+        $order         = new WC_Order($order_id);
+
+        if(strpos($event['type'], "order.refunded") !== false){
+                
+            $order->update_status('refunded', __( 'Order has been refunded', 'woocommerce' ));
+        }   
+        
     }
 
     /**
