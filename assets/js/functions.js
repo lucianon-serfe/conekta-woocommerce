@@ -15,7 +15,7 @@ jQuery(document).ready(function($){
             $('#woocommerce_conektaoxxopay_expiration').val(1)
         }else{
             if(type=="hours"){
-                if(currentValue > 24) $('#woocommerce_conektaoxxopay_expiration').val(24)
+                if(currentValue > 23) $('#woocommerce_conektaoxxopay_expiration').val(23)
             }else{
                 if(currentValue > 31) $('#woocommerce_conektaoxxopay_expiration').val(31)
             }
