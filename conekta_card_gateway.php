@@ -85,10 +85,11 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
         $paid_at       = date("Y-m-d", $charge['paid_at']);
         $order         = new WC_Order($order_id);
 
-        if(strpos($event['type'], "order.refunded") !== false){
-                
+        if(strpos($event['type'], "order.refunded") !== false)  {  
             $order->update_status('refunded', __( 'Order has been refunded', 'woocommerce' ));
-        }   
+        } elseif(strpos($event['type'], "order.canceled") !== false) {
+	        $order->update_status('cancelled', __( 'Order has been cancelled', 'woocommerce' ));
+	    }   
         
     }
 
