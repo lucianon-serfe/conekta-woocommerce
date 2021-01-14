@@ -80,19 +80,30 @@ class WC_Conekta_Cash_Gateway extends WC_Conekta_Plugin
         $paid_at       = date("Y-m-d", $charge['paid_at']);
         $order         = new WC_Order($order_id);
 
-        if (strpos($event['type'], "order.paid") !== false
-            && $charge['payment_method']['type'] === "oxxo")
+        if($charge['payment_method']['type'] === "oxxo"){
+            if (strpos($event['type'], "order.paid") !== false)
             {
                 update_post_meta($order->get_id(), 'conekta-paid-at', $paid_at);
                 $order->payment_complete();
                 $order->add_order_note(sprintf("Payment completed in Oxxo and notification of payment received"));
 
                 parent::ckpg_offline_payment_notification($order_id, $conekta_order['customer_info']['name']);
+            }elseif(strpos($event['type'], "order.expired") !== false){
+
+                $order->update_status('cancelled', __( 'Oxxo payment has been expired', 'woocommerce' ));
+
+            }elseif(strpos($event['type'], "order.canceled") !== false){
+                
+                $order->update_status('cancelled', __( 'Order has been canceled', 'woocommerce' ));
             }
+        }
+        
     }
 
+    
     public function ckpg_init_form_fields()
     {
+        wp_enqueue_script('functions', WP_PLUGIN_URL."/".plugin_basename(dirname(__FILE__)).'/assets/js/functions.js', '', '1.0', true);
         $this->form_fields = array(
             'enabled' => array(
                 'type'        => 'checkbox',
@@ -122,10 +133,20 @@ class WC_Conekta_Cash_Gateway extends WC_Conekta_Plugin
                 'title'       => __('Conekta API Live Private key', 'woothemes'),
                 'default'     => __('', 'woothemes')
             ),
-            'expiration_days' => array(
+            'expiration_time' => array(
+                'type'        => 'select',
+                'title'       => __('Expiration time type', 'woothemes'),
+                'label'       => __('Hours', 'woothemes'),
+                'default'     => 'no',
+                'options'     => array(
+                    'hours' => "Hours",
+                    'days' => "Days",
+                ),
+            ),
+            'expiration' => array(
                 'type'        => 'text',
-                'title'       => __('Expiration time (in days) for the reference', 'woothemes'),
-                'default'     => __('30', 'woothemes')
+                'title'       => __('Expiration time (in days or hours) for the reference', 'woothemes'),
+                'default'     => __('1', 'woothemes')
             ),
             'alternate_imageurl' => array(
                 'type'        => 'text',
@@ -268,7 +289,18 @@ class WC_Conekta_Cash_Gateway extends WC_Conekta_Plugin
 
             update_post_meta($this->order->get_id(), 'conekta-order-id', $order->id);
 
-            $expires_at = time() + ($this->settings['expiration_days'] * 86400);
+ 
+            if($this->settings['expiration_time']['hours']){
+                if($this->settings['expiration'] > 0 && $this->settings['expiration'] < 24){
+                    $expires_at = time() + ($this->settings['expiration'] * 3600);
+                }
+            }
+            else{
+                if($this->settings['expiration'] > 0 && $this->settings['expiration'] < 32){
+                    $expires_at = time() + ($this->settings['expiration'] * 86400);
+                }
+            }
+            
             $charge_details = array(
                 'payment_method' => array(
                     'type'       => 'oxxo_cash',
@@ -284,7 +316,7 @@ class WC_Conekta_Cash_Gateway extends WC_Conekta_Plugin
             update_post_meta($this->order->get_id(), 'conekta-creado',     $charge->created_at);
             update_post_meta($this->order->get_id(), 'conekta-expira',     $charge->payment_method->expires_at);
             update_post_meta($this->order->get_id(), 'conekta-referencia', $charge->payment_method->reference);
-
+            
             return true;
         } catch(\Conekta\Handler $e) {
             $description = $e->getMessage();
