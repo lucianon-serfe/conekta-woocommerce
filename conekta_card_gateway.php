@@ -65,7 +65,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
         }
 
 	add_action('woocommerce_order_refunded',  array($this, 'ckpg_conekta_card_order_refunded'), 10,2);
-	add_action( 'woocommerce_order_partially_refunded_notification', array( $this, 'trigger_partial'), 10,2);
+    add_action( 'woocommerce_order_partially_refunded', array( $this, 'ckpg_conekta_card_order_partially_refunded'), 10,2);
         add_action(
             'woocommerce_api_' . strtolower(get_class($this)),
             array($this, 'ckpg_webhook_handler')
@@ -77,7 +77,31 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
      * Webhook needs to be added to Conekta account tusitio.com/wc-api/WC_Conekta_Card_Gateway
      */
 
-   public function ckpg_conekta_card_order_refunded($order_id = null)
+    public function ckpg_webhook_handler()
+    {
+        header('HTTP/1.1 200 OK');
+        $body          = @file_get_contents('php://input');
+        $event         = json_decode($body, true);
+        $conekta_order = $event['data']['object'];
+        $charge        = $conekta_order['charges']['data'][0];
+        $order_id      = $conekta_order['metadata']['reference_id'];
+        $paid_at       = date("Y-m-d", $charge['paid_at']);
+        $order         = new WC_Order($order_id);
+
+         if(strpos($event['type'], "order.refunded") !== false)  { 
+            $order->update_status('refunded', __( 'Order has been refunded', 'woocommerce' ));
+        } elseif(strpos($event['type'], "order.partially_refunded") !== false || strpos($event['type'], "charge.partially_refunded") !== false) {
+            $refunded_amount = $conekta_order['amount_refunded'] / 100;
+            $refund_args = array('amount' => $refunded_amount, 'reason' => null, 'order_id' => $order_id );
+            $refund = wc_create_refund($refund_args);
+        } elseif(strpos($event['type'], "order.canceled") !== false) {
+	        $order->update_status('cancelled', __( 'Order has been cancelled', 'woocommerce' ));
+	    } 
+        
+    }
+
+
+    public function ckpg_conekta_card_order_refunded($order_id = null)
     {
         global $woocommerce;
         include_once('conekta_gateway_helper.php');
@@ -125,30 +149,10 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
 		} 
     }
 
-
-
-    public function ckpg_webhook_handler()
+    public function ckpg_conekta_card_order_partially_refunded($order_id = null)
     {
-        header('HTTP/1.1 200 OK');
-        $body          = @file_get_contents('php://input');
-        $event         = json_decode($body, true);
-        $conekta_order = $event['data']['object'];
-        $charge        = $conekta_order['charges']['data'][0];
-        $order_id      = $conekta_order['metadata']['reference_id'];
-        $paid_at       = date("Y-m-d", $charge['paid_at']);
-        $order         = new WC_Order($order_id);
-
-         if(strpos($event['type'], "order.refunded") !== false)  { 
-            $order->update_status('refunded', __( 'Order has been refunded', 'woocommerce' ));
-        } elseif(strpos($event['type'], "order.partially_refunded") !== false || strpos($event['type'], "charge.partially_refunded") !== false) {
-            $refunded_amount = $conekta_order['amount_refunded'] / 100;
-            $refund_args = array('amount' => $refunded_amount, 'reason' => null, 'order_id' => $order_id );
-            error_log(print_r($event, true));
-            $refund = wc_create_refund($refund_args);
-        } elseif(strpos($event['type'], "order.canceled") !== false) {
-	        $order->update_status('cancelled', __( 'Order has been cancelled', 'woocommerce' ));
-	    } 
-        
+        //just to verify if the action is called
+        error_log("partially refunded");
     }
 
     /**
