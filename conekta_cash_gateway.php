@@ -289,17 +289,7 @@ class WC_Conekta_Cash_Gateway extends WC_Conekta_Plugin
 
             update_post_meta($this->order->get_id(), 'conekta-order-id', $order->id);
 
- 
-            if($this->settings['expiration_time']['hours']){
-                if($this->settings['expiration'] > 0 && $this->settings['expiration'] < 24){
-                    $expires_at = time() + ($this->settings['expiration'] * 3600);
-                }
-            }
-            else{
-                if($this->settings['expiration'] > 0 && $this->settings['expiration'] < 32){
-                    $expires_at = time() + ($this->settings['expiration'] * 86400);
-                }
-            }
+            $expires_at = $this->ckpg_expiration_payment($this->settings['expiration_time']);
             
             $charge_details = array(
                 'payment_method' => array(
@@ -331,7 +321,23 @@ class WC_Conekta_Cash_Gateway extends WC_Conekta_Plugin
             return false;
         }
     }
+    public function ckpg_expiration_payment( $expiration ) {
 
+        switch( $expiration ){
+            case 'hours': 
+                $expiration_cont = 24;
+                $expires_time = 3600;
+            break;
+            case 'days': 
+                $expiration_cont = 32;
+                $expires_time = 86400;
+            break;
+        }
+        if($this->settings['expiration'] > 0 && $this->settings['expiration'] < $expiration_cont){
+            $expires = time() + ($this->settings['expiration'] * $expires_time);
+        }
+        return $expires;
+    }
     public function process_payment($order_id)
     {
         global $woocommerce;
