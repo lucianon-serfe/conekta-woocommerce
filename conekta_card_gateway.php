@@ -63,6 +63,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
         if(empty($this->secret_key)) {
           $this->enabled = false;
         }
+        error_log((string)filter_input(INPUT_POST,'s_country'));
 
 	add_action('woocommerce_order_refunded',  array($this, 'ckpg_conekta_card_order_refunded'), 10,2);
     add_action( 'woocommerce_order_partially_refunded', array( $this, 'ckpg_conekta_card_order_partially_refunded'), 10,2);
@@ -110,9 +111,12 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
         \Conekta\Conekta::setPlugin($this->name);
         \Conekta\Conekta::setPluginVersion($this->version);
         \Conekta\Conekta::setLocale('es');
-        
-		if (!$order_id){
-		    $order_id = sanitize_text_field((string) $_POST['order_id']);
+
+        if (!$order_id){
+            if( !empty($_POST['order_id']) ){
+                
+                $order_id = sanitize_text_field((string) filter_input(INPUT_POST, 'order_id'));
+            }
     	}
 
         $data = get_post_meta( $order_id );
@@ -120,8 +124,10 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
 			error_log('no ejecuto nada');
 			return;
 		}
-		$total = $data['_order_total'][0] * 100;
-        $amount = floatval($_POST['amount']);
+        $total = $data['_order_total'][0] * 100;
+        if( !empty($_POST['amount']) ) { 
+            $amount = floatval(filter_input(INPUT_POST, 'amount'));
+        }
 		if(isset($amount))
 		{
 		    $params['amount'] = round($amount);
