@@ -86,7 +86,6 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
         $conekta_order = $event['data']['object'];
         $charge        = $conekta_order['charges']['data'][0];
         $order_id      = $conekta_order['metadata']['reference_id'];
-        $paid_at       = date("Y-m-d", $charge['paid_at']);
         $order         = new WC_Order($order_id);
 
          if(strpos($event['type'], "order.refunded") !== false)  { 
