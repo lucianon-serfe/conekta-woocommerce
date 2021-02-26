@@ -1,7 +1,7 @@
 <?php
 
 if (!class_exists('Conekta')) {
-    require_once("lib/conekta-php/lib/Conekta.php");
+    require_once "lib/conekta-php/lib/Conekta.php";
 }
 
 /*
