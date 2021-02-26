@@ -31,7 +31,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
         $this->description = '';
         $this->icon        = $this->settings['alternate_imageurl'] ?
                              $this->settings['alternate_imageurl'] :
-                             WP_PLUGIN_URL . "/" . plugin_basename( dirname(__FILE__))
+                             WP_PLUGIN_URL . "/" . plugin_basename(__DIR__)
                              . '/images/credits.png';
 
         $this->use_sandbox_api      = strcmp($this->settings['debug'], 'yes') == 0;
@@ -63,7 +63,6 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
         if(empty($this->secret_key)) {
           $this->enabled = false;
         }
-        error_log((string)filter_input(INPUT_POST,'s_country'));
 
 	add_action('woocommerce_order_refunded',  array($this, 'ckpg_conekta_card_order_refunded'), 10,2);
     add_action( 'woocommerce_order_partially_refunded', array( $this, 'ckpg_conekta_card_order_partially_refunded'), 10,2);
@@ -104,7 +103,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
     public function ckpg_conekta_card_order_refunded($order_id = null)
     {
         global $woocommerce;
-        include_once 'conekta_gateway_helper.php';
+        $this->ck_include_file( 'conekta_gateway_helper.php' );
         \Conekta\Conekta::setApiKey($this->secret_key);
         \Conekta\Conekta::setApiVersion('2.0.0');
         \Conekta\Conekta::setPlugin($this->name);
@@ -120,7 +119,6 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
 
         $data = get_post_meta( $order_id );
 		if($data['_payment_method'][0] != 'conektacard') {
-			error_log('no ejecuto nada');
 			return;
 		}
         $total = $data['_order_total'][0] * 100;
@@ -145,7 +143,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
 			$description = $e->getMessage();
             global $wp_version;
             if (version_compare($wp_version, '4.1', '>=')) {
-                wc_add_notice(__('Error: ', 'woothemes') . $description , 'error');
+                wc_add_notice(__('Error: ', 'woothemes') . $description , $notice_type = 'error');
             } else {
                 error_log('Gateway Error:' . $description . "\n");
                 $woocommerce->add_error(__('Error: ', 'woothemes') . $description);
@@ -240,11 +238,11 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
     }
 
     public function admin_options() {
-        include_once 'templates/admin.php';
+        $this->ck_include_file( 'templates/admin.php' );
     }
 
     public function payment_fields() {
-        include_once 'templates/payment.php' ;
+        $this->ck_include_file( 'templates/payment.php' );
     }
 
     public function ckpg_payment_fields() {
@@ -253,7 +251,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
         }
 
         wp_enqueue_script('conekta_js', 'https://conektaapi.s3.amazonaws.com/v0.3.2/js/conekta.js', '', '', true);
-        wp_enqueue_script('tokenize', WP_PLUGIN_URL."/".plugin_basename(dirname(__FILE__)).'/assets/js/tokenize.js', '', '1.0', true); //check import convention
+        wp_enqueue_script('tokenize', WP_PLUGIN_URL."/".plugin_basename(__DIR__).'/assets/js/tokenize.js', '', '1.0', true); //check import convention
 
         //PCI
         $params = array(
@@ -266,7 +264,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
     protected function ckpg_send_to_conekta()
     {
         global $woocommerce;
-        include_once 'conekta_gateway_helper.php';
+        $this->ck_include_file( 'conekta_gateway_helper.php' );
         \Conekta\Conekta::setApiKey($this->secret_key);
         \Conekta\Conekta::setApiVersion('2.0.0');
         \Conekta\Conekta::setPlugin($this->name);
@@ -418,6 +416,11 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
 
     public function ckpg_is_null_or_empty_string($string) {
         return (!isset($string) || trim($string) === '');
+    }
+
+    public function ck_include_file($file){
+        
+        include_once $file;
     }
 }
 
