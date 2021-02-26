@@ -76,8 +76,8 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
     public function ckpg_webhook_handler()
     {
         header('HTTP/1.1 200 OK');
-        // $body          = @file_get_contents('php://input');
-        $event         = json_decode(file_get_contents('php://input'), true);
+        $body          = @file_get_contents('php://input');
+        $event         = json_decode($body, true);
         $conekta_order = $event['data']['object'];
         $charge        = $conekta_order['charges']['data'][0];
         $order_id      = $conekta_order['metadata']['reference_id'];
