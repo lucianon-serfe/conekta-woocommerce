@@ -64,12 +64,8 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
           $this->enabled = false;
         }
 
-	add_action('woocommerce_order_refunded',  array($this, 'ckpg_conekta_card_order_refunded'), 10,2);
-    add_action( 'woocommerce_order_partially_refunded', array( $this, 'ckpg_conekta_card_order_partially_refunded'), 10,2);
-        add_action(
-            'woocommerce_api_' . strtolower(get_class($this)),
-            array($this, 'ckpg_webhook_handler')
-        );
+        add_action('woocommerce_order_refunded',  array($this, 'ckpg_conekta_card_order_refunded'), 10,2 );
+        add_action('woocommerce_api_' . strtolower(get_class($this)), array($this, 'ckpg_webhook_handler') );
     }
 
     /**
@@ -154,12 +150,6 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
             }
             return false;
 		} 
-    }
-
-    public function ckpg_conekta_card_order_partially_refunded($order_id = null)
-    {
-        //just to verify if the action is called
-        error_log("partially refunded");
     }
 
     /**
