@@ -82,7 +82,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
         $charge        = $conekta_order['charges']['data'][0];
         $order_id      = $conekta_order['metadata']['reference_id'];
         $order         = new WC_Order($order_id);
-
+        error_log("entrooo");
          if(strpos($event['type'], "order.refunded") !== false)  { 
             $order->update_status('refunded', __( 'Order has been refunded', 'woocommerce' ));
         } elseif(strpos($event['type'], "order.partially_refunded") !== false || strpos($event['type'], "charge.partially_refunded") !== false) {
@@ -374,8 +374,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
                $this->transaction_id
                )
            );
-        $ord_awaiting_payment = filter_input(INPUT_SESSION,'order_awaiting_payment');
-        unset($ord_awaiting_payment);
+        unset($_SESSION['order_awaiting_payment']);
     }
 
     public function process_payment($order_id)
