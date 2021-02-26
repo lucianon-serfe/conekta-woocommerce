@@ -86,7 +86,6 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
         $conekta_order = $event['data']['object'];
         $charge        = $conekta_order['charges']['data'][0];
         $order_id      = $conekta_order['metadata']['reference_id'];
-        $paid_at       = date("Y-m-d", $charge['paid_at']);
         $order         = new WC_Order($order_id);
 
          if(strpos($event['type'], "order.refunded") !== false)  { 
@@ -105,7 +104,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
     public function ckpg_conekta_card_order_refunded($order_id = null)
     {
         global $woocommerce;
-        include_once('conekta_gateway_helper.php');
+        include_once 'conekta_gateway_helper.php';
         \Conekta\Conekta::setApiKey($this->secret_key);
         \Conekta\Conekta::setApiVersion('2.0.0');
         \Conekta\Conekta::setPlugin($this->name);
@@ -146,7 +145,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
 			$description = $e->getMessage();
             global $wp_version;
             if (version_compare($wp_version, '4.1', '>=')) {
-                wc_add_notice(__('Error: ', 'woothemes') . $description , $notice_type = 'error');
+                wc_add_notice(__('Error: ', 'woothemes') . $description , 'error');
             } else {
                 error_log('Gateway Error:' . $description . "\n");
                 $woocommerce->add_error(__('Error: ', 'woothemes') . $description);
@@ -241,11 +240,11 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
     }
 
     public function admin_options() {
-        include_once('templates/admin.php');
+        include_once 'templates/admin.php';
     }
 
     public function payment_fields() {
-        include_once('templates/payment.php');
+        include_once 'templates/payment.php' ;
     }
 
     public function ckpg_payment_fields() {
@@ -267,7 +266,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
     protected function ckpg_send_to_conekta()
     {
         global $woocommerce;
-        include_once('conekta_gateway_helper.php');
+        include_once 'conekta_gateway_helper.php';
         \Conekta\Conekta::setApiKey($this->secret_key);
         \Conekta\Conekta::setApiVersion('2.0.0');
         \Conekta\Conekta::setPlugin($this->name);
@@ -389,7 +388,6 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
 
     public function process_payment($order_id)
     {
-        global $woocommerce;
         $this->order        = new WC_Order($order_id);
         if ($this->ckpg_send_to_conekta())
         {
