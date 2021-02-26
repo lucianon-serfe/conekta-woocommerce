@@ -14,7 +14,7 @@ class WC_Conekta_Cash_Gateway extends WC_Conekta_Plugin
     protected $use_sandbox_api            = true;
     protected $order                      = null;
     protected $transaction_id             = null;
-    protected $tran_error_message  = null;
+    protected $trans_error_message  = null;
     protected $conekta_test_api_key       = '';
     protected $conekta_live_api_key       = '';
     protected $publishable_key            = '';
@@ -375,7 +375,7 @@ class WC_Conekta_Cash_Gateway extends WC_Conekta_Plugin
             sprintf(
                 "%s Oxxo Pay Payment Failed : '%s'",
                 $this->GATEWAY_NAME,
-                $this->tran_error_message
+                $this->trans_error_message
             )
         );
     }
