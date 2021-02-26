@@ -76,14 +76,14 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
     public function ckpg_webhook_handler()
     {
         header('HTTP/1.1 200 OK');
-        $body          = @file_get_contents('php://input');
-        $event         = json_decode($body, true);
+        // $body          = @file_get_contents('php://input');
+        $event         = json_decode(file_get_contents('php://input'), true);
         $conekta_order = $event['data']['object'];
         $charge        = $conekta_order['charges']['data'][0];
         $order_id      = $conekta_order['metadata']['reference_id'];
         $order         = new WC_Order($order_id);
-        error_log("entrooo");
-         if(strpos($event['type'], "order.refunded") !== false)  { 
+
+        if(strpos($event['type'], "order.refunded") !== false)  { 
             $order->update_status('refunded', __( 'Order has been refunded', 'woocommerce' ));
         } elseif(strpos($event['type'], "order.partially_refunded") !== false || strpos($event['type'], "charge.partially_refunded") !== false) {
             $refunded_amount = $conekta_order['amount_refunded'] / 100;
