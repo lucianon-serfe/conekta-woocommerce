@@ -113,7 +113,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
         \Conekta\Conekta::setLocale('es');
 
         if (!$order_id){
-            if( !empty($_POST['order_id']) ){
+            if( !empty( (string)filter_input(INPUT_POST,'order_id')) ){
                 
                 $order_id = sanitize_text_field((string) filter_input(INPUT_POST, 'order_id'));
             }
@@ -383,8 +383,8 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
                $this->transaction_id
                )
            );
-
-        unset($_SESSION['order_awaiting_payment']);
+        $order_awaiting_payment = filter_input(INPUT_SESSION,'order_awaiting_payment');
+        unset($order_awaiting_payment);
     }
 
     public function process_payment($order_id)
