@@ -125,7 +125,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
 			return;
 		}
         $total = $data['_order_total'][0] * 100;
-        if( !empty($_POST['amount']) ) { 
+        if( !empty(floatval(filter_input(INPUT_POST, 'amount'))) ) { 
             $amount = floatval(filter_input(INPUT_POST, 'amount'));
         }
 		if(isset($amount))
@@ -171,9 +171,9 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
         if (!$this->use_sandbox_api
           && get_option('woocommerce_force_ssl_checkout') == 'no'
           && $this->enabled == 'yes') {
-            echo '<div class="error"><p>'
+            return '<div class="error"><p>'
               .sprintf(
-                __('%s sandbox testing is disabled and can performe live transactions'
+                esc_html_e('%s sandbox testing is disabled and can performe live transactions'
                 .' but the <a href="%s">force SSL option</a> is disabled; your checkout'
                 .' is not secure! Please enable SSL and ensure your server has a valid SSL'
                 .' certificate.', 'woothemes'),
@@ -383,8 +383,8 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
                $this->transaction_id
                )
            );
-        $order_awaiting_payment = filter_input(INPUT_SESSION,'order_awaiting_payment');
-        unset($order_awaiting_payment);
+        $ord_awaiting_payment = filter_input(INPUT_SESSION,'order_awaiting_payment');
+        unset($ord_awaiting_payment);
     }
 
     public function process_payment($order_id)
