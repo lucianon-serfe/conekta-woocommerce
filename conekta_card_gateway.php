@@ -160,7 +160,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
         if (!$this->use_sandbox_api
           && get_option('woocommerce_force_ssl_checkout') == 'no'
           && $this->enabled == 'yes') {
-            _e( '<div class="error"><p>'
+            echo( '<div class="error"><p>'
               .sprintf(
                 __('%s sandbox testing is disabled and can performe live transactions'
                 .' but the <a href="%s">force SSL option</a> is disabled; your checkout'
