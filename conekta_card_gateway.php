@@ -96,8 +96,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
     }
 
 
-    public function ckpg_conekta_card_order_refunded($order_id = null)
-    {
+    public function ckpg_conekta_card_order_refunded($order_id = null) {
         global $woocommerce;
         include_once 'conekta_gateway_helper.php';
         \Conekta\Conekta::setApiKey($this->secret_key);
@@ -106,8 +105,8 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
         \Conekta\Conekta::setPluginVersion($this->version);
         \Conekta\Conekta::setLocale('es');
 
-        if (!$order_id){
-            if( !empty( (string)filter_input(INPUT_POST,'order_id')) ){
+        if (!$order_id) {
+            if( !empty( (string)filter_input(INPUT_POST,'order_id')) ) {
                 
                 $order_id = sanitize_text_field((string) filter_input(INPUT_POST, 'order_id'));
             }
@@ -121,8 +120,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
         if( !empty(floatval(filter_input(INPUT_POST, 'amount'))) ) { 
             $amount = floatval(filter_input(INPUT_POST, 'amount'));
         }
-		if(isset($amount))
-		{
+		if(isset($amount)) {
 		    $params['amount'] = round($amount);
 		}
         
