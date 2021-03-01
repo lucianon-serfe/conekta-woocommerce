@@ -63,8 +63,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
         if(empty($this->secret_key)) {
           $this->enabled = false;
         }
-        $this->ckpg_perform_ssl_check();
-        die;
+
         add_action('woocommerce_order_refunded',  array($this, 'ckpg_conekta_card_order_refunded'), 10,2 );
         add_action('woocommerce_api_' . strtolower(get_class($this)), array($this, 'ckpg_webhook_handler') );
     }
