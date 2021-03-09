@@ -1,7 +1,7 @@
 <?php
 
 if (!class_exists('Conekta')) {
-    require_once("lib/conekta-php/lib/Conekta.php");
+    require_once "lib/conekta-php/lib/Conekta.php";
 }
 
 /*
@@ -16,7 +16,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
     protected $order                     = null;
     protected $transaction_id            = null;
     protected $conekta_order_id          = null;
-    protected $transaction_error_message = null;
+    protected $trans_error_message = null;
     protected $currencies                = array('MXN', 'USD');
 
     public function __construct() {
@@ -31,7 +31,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
         $this->description = '';
         $this->icon        = $this->settings['alternate_imageurl'] ?
                              $this->settings['alternate_imageurl'] :
-                             WP_PLUGIN_URL . "/" . plugin_basename( dirname(__FILE__))
+                             WP_PLUGIN_URL . "/" . plugin_basename(__DIR__)
                              . '/images/credits.png';
 
         $this->use_sandbox_api      = strcmp($this->settings['debug'], 'yes') == 0;
@@ -63,27 +63,107 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
         if(empty($this->secret_key)) {
           $this->enabled = false;
         }
+
+        add_action('woocommerce_order_refunded',  array($this, 'ckpg_conekta_card_order_refunded'), 10,2 );
+        add_action('woocommerce_api_' . strtolower(get_class($this)), array($this, 'ckpg_webhook_handler') );
+    }
+
+    /**
+     * Updates the status of the order.
+     * Webhook needs to be added to Conekta account tusitio.com/wc-api/WC_Conekta_Card_Gateway
+     */
+
+    public function ckpg_webhook_handler()
+    {
+        header('HTTP/1.1 200 OK');
+        $body          = @file_get_contents('php://input');
+        $event         = json_decode($body, true);
+        $conekta_order = $event['data']['object'];
+        $charge        = $conekta_order['charges']['data'][0];
+        $order_id      = $conekta_order['metadata']['reference_id'];
+        $order         = new WC_Order($order_id);
+
+        if(strpos($event['type'], "order.refunded") !== false)  { 
+            $order->update_status('refunded', __( 'Order has been refunded', 'woocommerce' ));
+        } elseif(strpos($event['type'], "order.partially_refunded") !== false || strpos($event['type'], "charge.partially_refunded") !== false) {
+            $refunded_amount = $conekta_order['amount_refunded'] / 100;
+            $refund_args = array('amount' => $refunded_amount, 'reason' => null, 'order_id' => $order_id );
+            wc_create_refund($refund_args);
+        } elseif(strpos($event['type'], "order.canceled") !== false) {
+	        $order->update_status('cancelled', __( 'Order has been cancelled', 'woocommerce' ));
+	    } 
+        
+    }
+
+
+    public function ckpg_conekta_card_order_refunded($order_id = null) {
+        global $woocommerce;
+        include_once 'conekta_gateway_helper.php';
+        \Conekta\Conekta::setApiKey($this->secret_key);
+        \Conekta\Conekta::setApiVersion('2.0.0');
+        \Conekta\Conekta::setPlugin($this->name);
+        \Conekta\Conekta::setPluginVersion($this->version);
+        \Conekta\Conekta::setLocale('es');
+
+        if (!$order_id) {
+            if( !empty( (string)filter_input(INPUT_POST,'order_id')) ) {
+                
+                $order_id = sanitize_text_field((string) filter_input(INPUT_POST, 'order_id'));
+            }
+    	}
+
+        $data = get_post_meta( $order_id );
+		if($data['_payment_method'][0] != 'conektacard') {
+			return;
+		}
+        $total = $data['_order_total'][0] * 100;
+        if( !empty(floatval(filter_input(INPUT_POST, 'amount'))) ) { 
+            $amount = floatval(filter_input(INPUT_POST, 'amount'));
+        }
+		if(isset($amount)) {
+		    $params['amount'] = round($amount);
+		}
+        
+		try {
+        	$conekta_order_id = $data['conekta-order-id'][0];
+            $conekta_order = \Conekta\Order::find($conekta_order_id);
+            if($conekta_order['payment_status'] == "paid") {
+                $refund_response = $conekta_order->refund([
+                    'reason' => 'other',
+                    'amount' => $total,
+                ]);
+            }
+            
+            if( !empty( $refund_response) ) {
+                return true;
+            } 
+		} catch (\Conekta\Handler $e) {
+			$description = $e->getMessage();
+            global $wp_version;
+            if (version_compare($wp_version, '4.1', '>=')) {
+                wc_add_notice(__('Error: ', 'woothemes') . $description , $notice_type = 'error');
+            } else {
+                error_log('Gateway Error:' . $description . "\n");
+                $woocommerce->add_error(__('Error: ', 'woothemes') . $description);
+            }
+            return false;
+		} 
     }
 
     /**
     * Checks to see if SSL is configured and if plugin is configured in production mode
     * Forces use of SSL if not in testing
     */
-    public function ckpg_perform_ssl_check()
-    {
-        ///
+    public function ckpg_perform_ssl_check() {
+        
         if (!$this->use_sandbox_api
           && get_option('woocommerce_force_ssl_checkout') == 'no'
           && $this->enabled == 'yes') {
-            echo '<div class="error"><p>'
-              .sprintf(
-                __('%s sandbox testing is disabled and can performe live transactions'
-                .' but the <a href="%s">force SSL option</a> is disabled; your checkout'
-                .' is not secure! Please enable SSL and ensure your server has a valid SSL'
-                .' certificate.', 'woothemes'),
-                $this->GATEWAY_NAME, admin_url('admin.php?page=settings')
-              )
-            .'</p></div>';
+            ?>
+            <div class="error">
+                <p> <?php esc_attr_e( $this->GATEWAY_NAME ) ?> sandbox testing is disabled and can performe live transactions but the <a href="<?php esc_attr_e( admin_url('admin.php?page=settings') ) ?>">force SSL option</a> is disabled; your checkout is not secure! Please enable SSL and ensure your server has a valid SSL certificate.</p>
+            </div>
+            <?php
         }
     }
 
@@ -145,11 +225,11 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
     }
 
     public function admin_options() {
-        include_once('templates/admin.php');
+        include_once 'templates/admin.php';
     }
 
     public function payment_fields() {
-        include_once('templates/payment.php');
+        include_once 'templates/payment.php';
     }
 
     public function ckpg_payment_fields() {
@@ -158,7 +238,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
         }
 
         wp_enqueue_script('conekta_js', 'https://conektaapi.s3.amazonaws.com/v0.3.2/js/conekta.js', '', '', true);
-        wp_enqueue_script('tokenize', WP_PLUGIN_URL."/".plugin_basename(dirname(__FILE__)).'/assets/js/tokenize.js', '', '1.0', true); //check import convention
+        wp_enqueue_script('tokenize', WP_PLUGIN_URL."/".plugin_basename(__DIR__).'/assets/js/tokenize.js', '', '1.0', true); //check import convention
 
         //PCI
         $params = array(
@@ -171,7 +251,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
     protected function ckpg_send_to_conekta()
     {
         global $woocommerce;
-        include_once('conekta_gateway_helper.php');
+        include_once 'conekta_gateway_helper.php' ;
         \Conekta\Conekta::setApiKey($this->secret_key);
         \Conekta\Conekta::setApiVersion('2.0.0');
         \Conekta\Conekta::setPlugin($this->name);
@@ -264,7 +344,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
          sprintf(
              "%s Credit Card Payment Failed : '%s'",
              $this->GATEWAY_NAME,
-             $this->transaction_error_message
+             $this->trans_error_message
              )
          );
     }
@@ -287,13 +367,11 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
                $this->transaction_id
                )
            );
-
         unset($_SESSION['order_awaiting_payment']);
     }
 
     public function process_payment($order_id)
     {
-        global $woocommerce;
         $this->order        = new WC_Order($order_id);
         if ($this->ckpg_send_to_conekta())
         {
@@ -305,8 +383,7 @@ class WC_Conekta_Card_Gateway extends WC_Conekta_Plugin
                 );
             return $result;
         }
-        else
-        {
+        else {
             $this->ckpg_mark_as_failed_payment();
             WC()->session->reload_checkout = true;
         }
